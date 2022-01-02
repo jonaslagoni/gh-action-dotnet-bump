@@ -25,7 +25,7 @@ function logError(error) {
 function getProjectContent(pathToDocument) {
   return readFileSync(pathToDocument);
 }
-function getCurrentVersion(csprojDocument) {
+function getCurrentVersionCsproj(csprojDocument) {
   const doc = new DOMParser().parseFromString(
     csprojDocument,
     'text/xml'
@@ -51,7 +51,7 @@ function getCurrentVersion(csprojDocument) {
   return undefined;
 }
 
-function getNewProjectContent(newVersion, csprojDocument) {
+function getNewProjectContentCsproj(newVersion, csprojDocument) {
   const doc = new DOMParser().parseFromString(
     csprojDocument,
     'text/xml'
@@ -79,6 +79,43 @@ function getNewProjectContent(newVersion, csprojDocument) {
     }
   }
   return new XMLSerializer().serializeToString(rootNode);
+}
+
+//Lets make sure we can match everything with exec
+RegExp.prototype.execAllGen = function*(input) {
+  // eslint-disable-next-line security/detect-child-process
+  for (let match; (match = this.exec(input)) !== null;) 
+    yield match;
+}; RegExp.prototype.execAll = function(input) {
+  return [...this.execAllGen(input)];
+};
+function getCurrentVersionAssembly(assemblyDocument) {
+  // eslint-disable-next-line security/detect-unsafe-regex
+  const matchAssemblyVersion = /\[assembly: AssemblyVersion\(\"(?<version>.*)\"\)\]/gm;
+  const matches = matchAssemblyVersion.execAll(assemblyDocument);
+  if (matches.length > 0) {
+    // If multiple matches found, lets just assume last match is the value we are looking for...
+    const assemblyVersion = matches[matches.length-1].groups.version;
+    // Because assembly version matches major.minor.build.patch we need to convert to semver (remove build)
+    const versionSplit = assemblyVersion.split('.');
+    return `${versionSplit[0]}.${versionSplit[1]}.${versionSplit[3]}`;
+  }
+  return undefined;
+}
+
+function getNewProjectContentAssembly(newSemverVersion, assemblyDocument) {
+  // eslint-disable-next-line security/detect-unsafe-regex
+  const matchAssemblyVersion = /\[assembly: AssemblyVersion\(\"(?<version>.*)\"\)\]/gm;
+  const matches = matchAssemblyVersion.execAll(assemblyDocument);
+  const semverSplit = newSemverVersion.split('.');
+  const newAssemblyVersion = `${semverSplit[0]}.${semverSplit[1]}.0.${semverSplit.slice(2)}`;
+  if (matches.length > 0) {
+    //Remove and add version info, as it is easier.
+    assemblyDocument = assemblyDocument.replace(matchAssemblyVersion, '');
+  } 
+  return `${assemblyDocument}
+[assembly: AssemblyVersion("${newAssemblyVersion}")]
+`;
 }
 
 function runInWorkspace(command, args) {
@@ -130,10 +167,7 @@ function bumpVersion(currentVersion, bumpMajorVersion, bumpMinorVersion, bumpPat
 
 function getRelatedGitCommits(gitEvents) {
   const commitMessages = gitEvents.commits;
-  if (commitMessages) {  
-    if (commitMessages.length === 0) {
-      exitFailure('After filtering commits, none matched the AsyncAPI document or referenced files');
-    }
+  if (commitMessages && commitMessages.length > 0) {
     return commitMessages;
   } 
   exitFailure('Could not find any commits, existing');
@@ -197,7 +231,7 @@ async function setGitConfigs() {
   await runInWorkspace('git', [
     'config',
     'user.email',
-    `"${process.env.GITHUB_EMAIL || 'gh-action-asyncapi-bump-version@users.noreply.github.com'}"`,
+    `"${process.env.GITHUB_EMAIL || 'gh-action-dotnet-bump@users.noreply.github.com'}"`,
   ]);
 
   await runInWorkspace('git', ['fetch']);
@@ -241,6 +275,8 @@ module.exports = {
   findPreReleaseId,
   setGitConfigs,
   commitChanges,
-  getCurrentVersion,
-  getNewProjectContent
+  getCurrentVersionCsproj,
+  getNewProjectContentCsproj,
+  getCurrentVersionAssembly,
+  getNewProjectContentAssembly
 };

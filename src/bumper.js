@@ -10,8 +10,9 @@ const {
   logInfo,
   setGitConfigs,
   getProjectContent,
-  getCurrentVersion,
-  getNewProjectContent
+  getCurrentVersionCsproj,
+  getNewProjectContentCsproj,
+  getCurrentVersionAssembly
 } = require('./utils');
 
 module.exports = async (
@@ -26,7 +27,8 @@ module.exports = async (
   pathToDocument,
   targetBranch,
   preReleaseId,
-  commitMessageToUse) => {
+  commitMessageToUse, 
+  type) => {
   // eslint-disable-next-line security/detect-non-literal-require
   const gitEvents = process.env.GITHUB_EVENT_PATH ? require(process.env.GITHUB_EVENT_PATH) : {};
   logInfo(`Found the following git events: ${JSON.stringify(gitEvents, null, 4)}`);
@@ -34,7 +36,12 @@ module.exports = async (
   await setGitConfigs();
   pathToDocument = path.join(workspace, pathToDocument);
   const projectFile = getProjectContent(pathToDocument);
-  const currentVersion = getCurrentVersion(projectFile);
+  let currentVersion;
+  if (type === 'csproj') {
+    currentVersion = getCurrentVersionCsproj(projectFile);
+  } else if (type === 'assembly') {
+    currentVersion = getCurrentVersionAssembly(projectFile);
+  }
 
   const commitMessages = getRelatedGitCommits(gitEvents);
 
@@ -88,7 +95,12 @@ module.exports = async (
 
   //Bump version
   const newVersion = bumpVersion(currentVersion, doMajorVersion, doMinorVersion, doPatchVersion, doPreReleaseVersion, preReleaseId);
-  const newContent = getNewProjectContent(newVersion, projectFile);
+  let newContent;  
+  if (type === 'csproj') {
+    newContent = getNewProjectContentCsproj(newVersion, projectFile);
+  } else if (type === 'assembly') {
+    currentVersion = getCurrentVersionAssembly(projectFile);
+  }
   // eslint-disable-next-line security/detect-non-literal-fs-filename
   await promises.writeFile(pathToDocument, newContent);
   await commitChanges(newVersion, skipCommit, skipTag, skipPush, commitMessageToUse);
