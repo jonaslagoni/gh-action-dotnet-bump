@@ -27,7 +27,7 @@ Remove the 'actions/setup-node@v1' step from your action.yml file
     for most common commit metadata for feature additions: `"feat: new API"` and `"feature: new API"`.
   * If a commit message contains the word "pre-alpha" or "pre-beta" or "pre-rc" then the pre-release version will be increased (for example specifying pre-alpha: 1.6.0-alpha.1 -> 1.6.0-alpha.2 or, specifying pre-beta: 1.6.0-alpha.1 -> 1.6.0-beta.0)
   * All other changes will increment the patch version.
-* Push the bumped version in asyncapi.json back into the repo.
+* Push the bumped version back into the repo.
 * Push a tag for the new version back into the repo.
 
 ### Usage:

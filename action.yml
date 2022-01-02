@@ -1,6 +1,6 @@
 ---
 name: Automated Version Bump for .NET libraries
-description: Automated version bump for AsyncAPI documents to follow Semantic Versioning.
+description: Automated version bump for .NET libraries to follow Semantic Versioning.
 runs:
   using: node12
   main: src/index.js

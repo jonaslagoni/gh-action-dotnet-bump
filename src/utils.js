@@ -167,10 +167,7 @@ function bumpVersion(currentVersion, bumpMajorVersion, bumpMinorVersion, bumpPat
 
 function getRelatedGitCommits(gitEvents) {
   const commitMessages = gitEvents.commits;
-  if (commitMessages) {  
-    if (commitMessages.length === 0) {
-      exitFailure('After filtering commits, none matched the AsyncAPI document or referenced files');
-    }
+  if (commitMessages && commitMessages.length > 0) {
     return commitMessages;
   } 
   exitFailure('Could not find any commits, existing');
@@ -234,7 +231,7 @@ async function setGitConfigs() {
   await runInWorkspace('git', [
     'config',
     'user.email',
-    `"${process.env.GITHUB_EMAIL || 'gh-action-asyncapi-bump-version@users.noreply.github.com'}"`,
+    `"${process.env.GITHUB_EMAIL || 'gh-action-dotnet-bump@users.noreply.github.com'}"`,
   ]);
 
   await runInWorkspace('git', ['fetch']);
