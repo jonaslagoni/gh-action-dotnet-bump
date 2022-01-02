@@ -1,9 +1,8 @@
 # gh-action-dotnet-bump
-GitHub action which bumps the AsyncAPI document version for following Semantic Versioning.
+GitHub action which bumps the library version that follows Semantic Versioning.
 
-This Action bumps the version in asyncapi.json and pushes it back to the repo.
-It is meant to be used on every successful merge to master but
-you'll need to configured that workflow yourself. 
+> NOTICE: Pre-release functionality for `type=assembly` is untested and might not work as .NET versioning there does not follow semver.
+
 
 **Attention**
 

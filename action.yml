@@ -5,6 +5,10 @@ runs:
   using: node12
   main: src/index.js
 inputs:
+  type:
+    description: 'Which type of project are you bumping version for? This is important as .NET Core projects store versions in .csproj files, and .NET framework use AssemblyInfo.cs. Use either "csproj" or "assembly"'
+    default: 'csproj'
+    required: false
   tag-prefix:
     description: 'Prefix that is used for the git tag'
     default: ''
