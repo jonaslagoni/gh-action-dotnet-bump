@@ -41,7 +41,7 @@ module.exports = async (
   await setGitConfigs();
   pathToDocument = path.join(workspace, pathToDocument);
   logInfo(`Path to document: ${pathToDocument}`);
-  const projectFile = getProjectContent(pathToDocument);
+  const projectFile = getProjectContent(pathToDocument).toString();
   logInfo(`projectFile: ${projectFile}`);
   let currentVersion;
   if (type === 'csproj') {
