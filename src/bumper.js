@@ -1,5 +1,6 @@
 const path = require('path');
 const { promises } = require('fs');
+const core = require('@actions/core');
 const {
   exitSuccess,
   findPreReleaseId,
@@ -40,12 +41,17 @@ module.exports = async (
   pathToDocument = path.join(workspace, pathToDocument);
   logInfo(`Path to document: ${pathToDocument}`);
   const projectFile = getProjectContent(pathToDocument);
+  logInfo(`projectFile: ${projectFile}`);
   let currentVersion;
   if (type === 'csproj') {
     currentVersion = getCurrentVersionCsproj(projectFile);
   } else if (type === 'assembly') {
     currentVersion = getCurrentVersionAssembly(projectFile);
+  } else {
+    logInfo(`Type not recognized: ${type}`);
+    return false;
   }
+  core.setOutput('oldVersion', currentVersion);
   logInfo(`Current version: ${currentVersion}`);
   
   const commitMessages = await getCommitMessages(gitEvents, token);
@@ -85,6 +91,7 @@ module.exports = async (
 
   //Bump version
   const newVersion = bumpVersion(currentVersion, doMajorVersion, doMinorVersion, doPatchVersion, doPreReleaseVersion, preReleaseId);
+  core.setOutput('newVersion', `${newVersion}`);
   logInfo(`New version: ${newVersion}`);
   let newContent;  
   if (type === 'csproj') {
@@ -92,8 +99,11 @@ module.exports = async (
   } else if (type === 'assembly') {
     newContent = getCurrentVersionAssembly(projectFile);
   }
+  logInfo(`new project file: ${newContent}`);
   // eslint-disable-next-line security/detect-non-literal-fs-filename
   await promises.writeFile(pathToDocument, newContent);
+  logInfo('New project file written');
   await commitChanges(newVersion, skipCommit, skipTag, skipPush, commitMessageToUse);
+  logInfo('Changes committed');
   return true;
 };

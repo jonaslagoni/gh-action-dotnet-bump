@@ -19,7 +19,7 @@ const { exitSuccess, logError, exitFailure } = require('./utils');
     const commitMessageToUse = core.getInput('commit-message');
     const releaseCommitMessageRegex = core.getInput('release-commit-message-regex');
     const type = core.getInput('type');
-    const newVersion = await bumpVersion(tagPrefix,
+    const wasBumped = await bumpVersion(tagPrefix,
       minorWording,
       majorWording,
       patchWording,
@@ -34,8 +34,8 @@ const { exitSuccess, logError, exitFailure } = require('./utils');
       commitMessageToUse, 
       type,
       releaseCommitMessageRegex || commitMessageToUse);
-    if (newVersion) {
-      core.setOutput('newVersion', newVersion);
+    if (wasBumped) {
+      core.setOutput('wasBumped', wasBumped);
       exitSuccess('Version bumped!');
     }
   } catch (err) {
