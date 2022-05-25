@@ -38,6 +38,7 @@ module.exports = async (
   const workspace = process.env.GITHUB_WORKSPACE;
   await setGitConfigs();
   pathToDocument = path.join(workspace, pathToDocument);
+  logInfo(`Path to document: ${pathToDocument}`);
   const projectFile = getProjectContent(pathToDocument);
   let currentVersion;
   if (type === 'csproj') {
