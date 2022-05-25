@@ -14,7 +14,8 @@ const {
   getNewProjectContentCsproj,
   getCurrentVersionAssembly,
   getCommitMessages,
-  getRelevantCommitMessages
+  getRelevantCommitMessages,
+  logError
 } = require('./utils');
 
 module.exports = async (
@@ -48,7 +49,11 @@ module.exports = async (
   } else if (type === 'assembly') {
     currentVersion = getCurrentVersionAssembly(projectFile);
   } else {
-    logInfo(`Type not recognized: ${type}`);
+    logError(`Type not recognized: ${type}`);
+    return false;
+  }
+  if (currentVersion === undefined) {
+    logError(`Could not find the current version as it was undefined: ${currentVersion}`);
     return false;
   }
   core.setOutput('oldVersion', currentVersion);

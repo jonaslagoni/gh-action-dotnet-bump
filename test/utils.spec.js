@@ -98,6 +98,36 @@ describe('Utils', () => {
       const version = getCurrentVersionCsproj(csproj);
       expect(version).toEqual('1.0.0');
     });
+    
+    test('should return version 2', () => {
+      const csproj = `
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net461</TargetFrameworks>
+    <RootNamespace>Asyncapi.Nats.Client</RootNamespace>
+    <Version>0.1.0</Version>
+    <PackageVersion>0.1.0</PackageVersion>
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
+    <FileVersion>0.1.0.0</FileVersion>
+    <RepositoryUrl>https://github.com/GamingAPI/rust-csharp-game-api.git</RepositoryUrl> 
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="NATS.Client" />
+    <None Remove="System.Text.Json" />
+    <None Remove="Microsoft.CSharp" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="NATS.Client" Version="0.12.0" />
+    <PackageReference Include="System.Text.Json" Version="5.0.2" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+  </ItemGroup>
+</Project>
+`;
+      const version = getCurrentVersionCsproj(csproj);
+      expect(version).toEqual('0.1.0');
+    });
     test('should return undefined when no version present', () => {
       const csproj = `<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
