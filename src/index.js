@@ -17,6 +17,7 @@ const { exitSuccess, logError, exitFailure } = require('./utils');
     const defaultBumpVersion = core.getInput('default-bump-version');
     const preReleaseId = core.getInput('pre-release-id');
     const commitMessageToUse = core.getInput('commit-message');
+    const releaseCommitMessageRegex = core.getInput('release-commit-message-regex');
     const type = core.getInput('type');
     const newVersion = await bumpVersion(tagPrefix,
       minorWording,
@@ -31,7 +32,8 @@ const { exitSuccess, logError, exitFailure } = require('./utils');
       defaultBumpVersion,
       preReleaseId,
       commitMessageToUse, 
-      type);
+      type,
+      releaseCommitMessageRegex || commitMessageToUse);
     if (newVersion) {
       core.setOutput('newVersion', newVersion);
       exitSuccess('Version bumped!');

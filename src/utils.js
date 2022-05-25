@@ -4,6 +4,7 @@ const { readFileSync } = require('fs');
 const { EOL } = require('os');
 const semverInc = require('semver/functions/inc');
 const { DOMParser, XMLSerializer } = require('@xmldom/xmldom');
+const github = require('@actions/github');
 
 function logInfo(message) {
   console.info(message);
@@ -165,12 +166,63 @@ function bumpVersion(currentVersion, bumpMajorVersion, bumpMinorVersion, bumpPat
   return semverInc(currentVersion, release, {}, preReleaseId);
 }
 
-function getRelatedGitCommits(gitEvents) {
-  const commitMessages = gitEvents.commits;
-  if (commitMessages && commitMessages.length > 0) {
-    return commitMessages;
-  } 
-  exitFailure('Could not find any commits, existing');
+/**
+ * Get all the commits
+ *  
+ * @param {*} gitEvents 
+ * @param {*} githubToken
+ * @returns 
+ */
+async function getCommitMessages(gitEvents, githubToken) {
+  const client = github.getOctokit(githubToken);
+
+  const response = await client.rest.repos.listCommits({
+    owner: gitEvents.repository.organization,
+    repo: gitEvents.repository.name
+  });
+
+  // Ensure that the request was successful.
+  if (response.status !== 200) {
+    exitFailure(
+      `The GitHub API for for getting commits returned ${response.status}, expected 200. ` +
+        'Please submit an issue on this action\'s GitHub repo.'
+    );
+  }
+  
+  const commits = response.data;
+  if (commits.length === 0) {
+    exitFailure('After filtering commits, none matched the AsyncAPI document or referenced files');
+  }
+  return commits.map((commitEvent) => `${commitEvent.commit.message}\n${commitEvent.commit.body || ''}`);
+}
+
+/**
+ * Get all the commits up until the release commit
+ * 
+ * @param {*} commitMessages 
+ * @param {*} commitMessageToUse 
+ * @param {*} tagPrefix 
+ * @returns 
+ */
+function getRelevantCommitMessages(commitMessages, commitMessageToUse, tagPrefix) {
+  // eslint-disable-next-line security/detect-non-literal-regexp
+  const commitMessageRegex = new RegExp(commitMessageToUse.replace(/{{version}}/g, `${tagPrefix}\\d+\\.\\d+\\.\\d+`), 'ig');
+  let commitIndexOfBump = undefined;
+  // Find the latest commit that matches release commit message
+  for (const [index, commitMessage] of commitMessages.entries()) {
+    const commitIsBump = commitMessageRegex.test(commitMessage);
+    if (commitIsBump) {
+      commitIndexOfBump = index;
+      break;
+    }
+  }
+
+  let relevantCommitMessages = commitMessages;
+  // Splice the commit messages to only contain those who are after bump commit
+  if (commitIndexOfBump !== undefined) {
+    relevantCommitMessages = commitMessages.slice(0, commitIndexOfBump);
+  }
+  return relevantCommitMessages;
 }
 
 /**
@@ -270,7 +322,8 @@ module.exports = {
   logError,
   runInWorkspace,
   bumpVersion,
-  getRelatedGitCommits,
+  getCommitMessages,
+  getRelevantCommitMessages,
   analyseVersionChange,
   findPreReleaseId,
   setGitConfigs,

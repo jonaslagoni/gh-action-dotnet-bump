@@ -2,7 +2,6 @@ const path = require('path');
 const { promises } = require('fs');
 const {
   exitSuccess,
-  getRelatedGitCommits,
   findPreReleaseId,
   analyseVersionChange,
   bumpVersion,
@@ -12,7 +11,9 @@ const {
   getProjectContent,
   getCurrentVersionCsproj,
   getNewProjectContentCsproj,
-  getCurrentVersionAssembly
+  getCurrentVersionAssembly,
+  getCommitMessages,
+  getRelevantCommitMessages
 } = require('./utils');
 
 module.exports = async (
@@ -28,7 +29,9 @@ module.exports = async (
   targetBranch,
   preReleaseId,
   commitMessageToUse, 
-  type) => {
+  type,
+  releaseCommitMessageRegex) => {
+  const token = process.env.GITHUB_TOKEN;
   // eslint-disable-next-line security/detect-non-literal-require
   const gitEvents = process.env.GITHUB_EVENT_PATH ? require(process.env.GITHUB_EVENT_PATH) : {};
   logInfo(`Found the following git events: ${JSON.stringify(gitEvents, null, 4)}`);
@@ -42,15 +45,14 @@ module.exports = async (
   } else if (type === 'assembly') {
     currentVersion = getCurrentVersionAssembly(projectFile);
   }
+  
+  const commitMessages = await getCommitMessages(gitEvents, token);
+  logInfo(`Found commit messages: ${JSON.stringify(commitMessages, null, 4)}`);
 
-  const commitMessages = getRelatedGitCommits(gitEvents);
-
-  // eslint-disable-next-line security/detect-non-literal-regexp
-  const commitMessageRegex = new RegExp(commitMessageToUse.replace(/{{version}}/g, `${tagPrefix}\\d+\\.\\d+\\.\\d+`), 'ig');
-  const alreadyBumped = commitMessages.find((message) => commitMessageRegex.test(message)) !== undefined;
-
-  if (alreadyBumped) {
-    exitSuccess('No action necessary because we found a previous bump!');
+  const relevantCommitMessages = getRelevantCommitMessages(commitMessages, releaseCommitMessageRegex ? releaseCommitMessageRegex : commitMessageToUse, tagPrefix);
+  logInfo(`Relevant commit messages: ${JSON.stringify(relevantCommitMessages, null, 4)}`);
+  if (relevantCommitMessages.length === 0) {
+    exitSuccess('No action necessary because latest commit was a bump!');
     return false;
   }
 
