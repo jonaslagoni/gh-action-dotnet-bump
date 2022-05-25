@@ -1,7 +1,7 @@
 {
   "name": "@lagoni/gh-action-dotnet-bump",
   "description": "GitHub action for bumping version of .NET libraries with semantic release",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jonaslagoni/gh-action-dotnet-bump.git"
