@@ -45,11 +45,12 @@ module.exports = async (
   } else if (type === 'assembly') {
     currentVersion = getCurrentVersionAssembly(projectFile);
   }
+  logInfo(`Current version: ${currentVersion}`);
   
   const commitMessages = await getCommitMessages(gitEvents, token);
   logInfo(`Found commit messages: ${JSON.stringify(commitMessages, null, 4)}`);
 
-  const relevantCommitMessages = getRelevantCommitMessages(commitMessages, releaseCommitMessageRegex ? releaseCommitMessageRegex : commitMessageToUse, tagPrefix);
+  const relevantCommitMessages = getRelevantCommitMessages(commitMessages, releaseCommitMessageRegex, tagPrefix);
   logInfo(`Relevant commit messages: ${JSON.stringify(relevantCommitMessages, null, 4)}`);
   if (relevantCommitMessages.length === 0) {
     exitSuccess('No action necessary because latest commit was a bump!');
@@ -57,19 +58,6 @@ module.exports = async (
   }
 
   const {doMajorVersion, doMinorVersion, doPatchVersion, doPreReleaseVersion} = analyseVersionChange(majorWording, minorWording, patchWording, rcWording, commitMessages);
-
-  // case: if default=prerelease,
-  // rc-wording is also set
-  // and does not include any of rc-wording
-  // then unset it and do not run
-  if (
-    doPreReleaseVersion &&
-    rcWording &&
-    !commitMessages.some((message) => rcWording.some((word) => message.includes(word)))
-  ) {
-    logInfo('Default bump version sat to a nonexisting prerelease wording, skipping bump.');
-    return false;
-  }
 
   //Should we do any version updates? 
   if (!doMajorVersion && !doMinorVersion && !doPatchVersion && !doPreReleaseVersion) {
@@ -92,8 +80,7 @@ module.exports = async (
     // We want to override the branch that we are pulling / pushing to
     currentBranch = targetBranch;
   }
-  logInfo('Current branch:', currentBranch);
-  logInfo('Current version:', currentVersion);
+  logInfo(`Current branch: ${currentBranch}`);
 
   //Bump version
   const newVersion = bumpVersion(currentVersion, doMajorVersion, doMinorVersion, doPatchVersion, doPreReleaseVersion, preReleaseId);
