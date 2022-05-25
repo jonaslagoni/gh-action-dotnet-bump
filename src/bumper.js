@@ -85,11 +85,12 @@ module.exports = async (
 
   //Bump version
   const newVersion = bumpVersion(currentVersion, doMajorVersion, doMinorVersion, doPatchVersion, doPreReleaseVersion, preReleaseId);
+  logInfo(`New version: ${newVersion}`);
   let newContent;  
   if (type === 'csproj') {
     newContent = getNewProjectContentCsproj(newVersion, projectFile);
   } else if (type === 'assembly') {
-    currentVersion = getCurrentVersionAssembly(projectFile);
+    newContent = getCurrentVersionAssembly(projectFile);
   }
   // eslint-disable-next-line security/detect-non-literal-fs-filename
   await promises.writeFile(pathToDocument, newContent);
