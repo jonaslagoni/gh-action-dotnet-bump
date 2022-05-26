@@ -261,7 +261,14 @@ function analyseVersionChange(majorWording, minorWording, patchWording, rcWordin
   // patch is by default empty, and '' would always be true in the includes(''), thats why we handle it separately
   const patchWords = patchWording ? patchWording.split(',') : null;
   const preReleaseWords = rcWording ? rcWording.split(',') : null;
-  logInfo(`config words: ${JSON.stringify({ majorWords, minorWords, patchWords, preReleaseWords })}`);
+  logInfo(`Config words: ${JSON.stringify({ majorWords, minorWords, patchWords, preReleaseWords })}`);
+
+  //Only use the first part of a commit message i.e.
+  // 'ci: feat test' becomes 'ci' as it's the only relevant part up until the first ':'
+  const mappedCommitMessages = commitMessages.map((commitMessage) => {
+    return commitMessage.split(':')[0];
+  });
+  logInfo(`Mapped commit messages: ${JSON.stringify(mappedCommitMessages)}`);
 
   let doMajorVersion = false;
   let doMinorVersion = false;
@@ -269,22 +276,22 @@ function analyseVersionChange(majorWording, minorWording, patchWording, rcWordin
   let doPreReleaseVersion = false;
   // case: if wording for MAJOR found
   if (
-    commitMessages.some(
+    mappedCommitMessages.some(
       // eslint-disable-next-line security/detect-unsafe-regex
-      (message) => (/^([a-zA-Z]+)(\(.+\))?(\!)\:/).test(message) || majorWords.some((word) => message.includes(word)),
+      (message) => majorWords.some((word) => message.includes(word)),
     )
   ) {
     doMajorVersion = true;
-  } else if (commitMessages.some((message) => minorWords.some((word) => message.includes(word)))) {
+  } else if (mappedCommitMessages.some((message) => minorWords.some((word) => message.includes(word)))) {
     // case: if wording for MINOR found
     doMinorVersion = true;
   } else if (patchWords && 
-    commitMessages.some((message) => patchWords.some((word) => message.includes(word)))) {
+    mappedCommitMessages.some((message) => patchWords.some((word) => message.includes(word)))) {
     // case: if wording for PATCH found
     doPatchVersion = true;
   } else if (
     preReleaseWords &&
-    commitMessages.some((message) => preReleaseWords.some((word) => message.includes(word)))) {
+    mappedCommitMessages.some((message) => preReleaseWords.some((word) => message.includes(word)))) {
     // case: if wording for PRE-RELEASE found
     doPreReleaseVersion = true;
   }

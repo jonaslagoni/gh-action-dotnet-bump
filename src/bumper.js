@@ -70,7 +70,8 @@ module.exports = async (
   }
 
   const {doMajorVersion, doMinorVersion, doPatchVersion, doPreReleaseVersion} = analyseVersionChange(majorWording, minorWording, patchWording, rcWording, commitMessages);
-
+  logInfo(`Should do version change? ${JSON.stringify({doMajorVersion, doMinorVersion, doPatchVersion, doPreReleaseVersion})}`);
+  
   //Should we do any version updates? 
   if (!doMajorVersion && !doMinorVersion && !doPatchVersion && !doPreReleaseVersion) {
     logInfo('Could not find any version bump to make, skipping.');
@@ -104,7 +105,7 @@ module.exports = async (
   } else if (type === 'assembly') {
     newContent = getCurrentVersionAssembly(projectFile);
   }
-  logInfo(`new project file: ${newContent}`);
+  logInfo(`New project file: ${newContent}`);
   // eslint-disable-next-line security/detect-non-literal-fs-filename
   await promises.writeFile(pathToDocument, newContent);
   logInfo('New project file written');

@@ -1,4 +1,4 @@
-const { logInfo, logError, bumpVersion, analyseVersionChange, getCurrentVersionCsproj, getNewProjectContentCsproj, getCurrentVersionAssembly, getNewProjectContentAssembly } = require('../src/utils');
+const { logInfo, logError, bumpVersion, analyseVersionChange, getCurrentVersionCsproj, getNewProjectContentCsproj, getCurrentVersionAssembly, getNewProjectContentAssembly, getRelevantCommitMessages } = require('../src/utils');
 describe('Utils', () => {
   afterEach(() => {
     jest.clearAllMocks();
@@ -46,23 +46,54 @@ describe('Utils', () => {
     });
   });
   
+  describe('getRelevantCommitMessages', () => {
+    test('should return relevant commit messages up until release commit', () => {
+      const messages = [
+        'feat: new test something description\n',
+        'ci: fixed commit message not matched\n',
+        'chore(release): test something v0.3.0 (#6)\n',
+        'feat: new test something description\n'
+      ];
+      const relevantCommitMessages = getRelevantCommitMessages(messages, 'chore\\(release\\): test something v{{version}}', '');
+      expect(relevantCommitMessages).toEqual([
+        'feat: new test something description\n',
+        'ci: fixed commit message not matched\n'
+      ]);
+    });
+    test('should return no commits if release is the latest commit', () => {
+      const messages = [
+        'chore(release): test something v0.3.0 (#6)\n',
+        'feat: new test something description\n'
+      ];
+      const relevantCommitMessages = getRelevantCommitMessages(messages, 'chore\\(release\\): test something v{{version}}', '');
+      expect(relevantCommitMessages).toEqual([]);
+    });
+  });
+  
   describe('analyseVersionChange', () => {
+    test('wording in commit message', () => {
+      const {doMajorVersion, doMinorVersion, doPatchVersion, doPreReleaseVersion} = analyseVersionChange('feat!', 'feat', 'fix', 'pre', ['ci: feat! test']);
+      expect(doMajorVersion).toEqual(false);
+      expect(doMinorVersion).toEqual(false);
+      expect(doPatchVersion).toEqual(false);
+      expect(doPreReleaseVersion).toEqual(false);
+    });
     test('figure out to bump major version', () => {
-      const {doMajorVersion, doMinorVersion, doPatchVersion, doPreReleaseVersion} = analyseVersionChange('feat!', '', '', '', ['feat!: change request']);
+      const {doMajorVersion, doMinorVersion, doPatchVersion, doPreReleaseVersion} = analyseVersionChange('feat!', 'feat', 'fix', 'pre', ['feat!: change request']);
       expect(doMajorVersion).toEqual(true);
       expect(doMinorVersion).toEqual(false);
       expect(doPatchVersion).toEqual(false);
       expect(doPreReleaseVersion).toEqual(false);
     });
     test('figure out to bump minor version', () => {
-      const {doMajorVersion, doMinorVersion, doPatchVersion, doPreReleaseVersion} = analyseVersionChange('feat!', 'feat', '', '', ['feat: change request']);
+      const {doMajorVersion, doMinorVersion, doPatchVersion, doPreReleaseVersion} = analyseVersionChange('feat!', 'feat', 'fix', 'pre', ['feat: change request']);
       expect(doMajorVersion).toEqual(false);
       expect(doMinorVersion).toEqual(true);
       expect(doPatchVersion).toEqual(false);
       expect(doPreReleaseVersion).toEqual(false);
     });
     test('figure out to bump patch version', () => {
-      const {doMajorVersion, doMinorVersion, doPatchVersion, doPreReleaseVersion} = analyseVersionChange('feat!', 'feat', 'fix', '', ['fix: change request']);
+      const {doMajorVersion, doMinorVersion, doPatchVersion, doPreReleaseVersion} = analyseVersionChange('feat!', 'feat', 'fix', 'pre', ['fix: change request']);
       expect(doMajorVersion).toEqual(false);
       expect(doMinorVersion).toEqual(false);
       expect(doPatchVersion).toEqual(true);
