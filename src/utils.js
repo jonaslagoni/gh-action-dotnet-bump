@@ -52,6 +52,7 @@ function getCurrentVersionCsproj(csprojDocument) {
   return undefined;
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function getNewProjectContentCsproj(newVersion, csprojDocument) {
   const doc = new DOMParser().parseFromString(
     csprojDocument,
@@ -64,6 +65,7 @@ function getNewProjectContentCsproj(newVersion, csprojDocument) {
     });
     if (propertyGroupNodes.length === 1) {
       const propertyGroupNode = propertyGroupNodes[0];
+
       const versionNodes = Object.values(propertyGroupNode.childNodes).filter((node) => {
         return node.nodeName === 'Version';
       });
@@ -76,6 +78,30 @@ function getNewProjectContentCsproj(newVersion, csprojDocument) {
           'text/xml'
         );
         propertyGroupNode.appendChild(versionNode);
+      }
+
+      const packageVersionNodes = Object.values(propertyGroupNode.childNodes).filter((node) => {
+        return node.nodeName === 'PackageVersion';
+      });
+      if (packageVersionNodes.length === 1) {
+        const versionNode = packageVersionNodes[0];
+        versionNode.childNodes.item(0).data = newVersion;
+      }
+
+      const assemblyVersionNodes = Object.values(propertyGroupNode.childNodes).filter((node) => {
+        return node.nodeName === 'AssemblyVersion';
+      });
+      if (assemblyVersionNodes.length === 1) {
+        const versionNode = assemblyVersionNodes[0];
+        versionNode.childNodes.item(0).data = `${newVersion}.0`;
+      }
+
+      const fileVersionNodes = Object.values(propertyGroupNode.childNodes).filter((node) => {
+        return node.nodeName === 'FileVersion';
+      });
+      if (fileVersionNodes.length === 1) {
+        const versionNode = fileVersionNodes[0];
+        versionNode.childNodes.item(0).data = `${newVersion}.0`;
       }
     }
   }
@@ -294,6 +320,11 @@ async function commitChanges(newVersion, skipCommit, skipTag, skipPush, commitMe
     // to support "actions/checkout@v1"
     if (!skipCommit) {
       await runInWorkspace('git', ['commit', '-a', '-m', commitMessageToUse.replace(/{{version}}/g, newVersion)]);
+    } else {
+      console.warn(
+        'Skipping commit'
+      );
+      return;
     }
   } catch (e) {
     console.warn(

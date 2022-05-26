@@ -45,6 +45,7 @@ describe('Utils', () => {
       expect(newVersion).toEqual('0.0.1-pre2.0');
     });
   });
+  
   describe('analyseVersionChange', () => {
     test('figure out to bump major version', () => {
       const {doMajorVersion, doMinorVersion, doPatchVersion, doPreReleaseVersion} = analyseVersionChange('feat!', '', '', '', ['feat!: change request']);
@@ -98,7 +99,7 @@ describe('Utils', () => {
       const version = getCurrentVersionCsproj(csproj);
       expect(version).toEqual('1.0.0');
     });
-    
+
     test('should return version 2', () => {
       const csproj = `
 <Project Sdk="Microsoft.NET.Sdk">
@@ -152,6 +153,35 @@ describe('Utils', () => {
   });
   
   describe('getNewProjectContentCsproj', () => {
+    test('should return accurate version change for multiple version properties', () => {
+      const csproj = `
+  <Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net461</TargetFrameworks>
+    <RootNamespace>Asyncapi.Nats.Client</RootNamespace>
+    <Version>0.1.0</Version>
+    <PackageVersion>0.1.0</PackageVersion>
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
+    <FileVersion>0.1.0.0</FileVersion>
+    <RepositoryUrl>https://github.com/GamingAPI/rust-csharp-game-api.git</RepositoryUrl> 
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="NATS.Client" />
+    <None Remove="System.Text.Json" />
+    <None Remove="Microsoft.CSharp" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="NATS.Client" Version="0.12.0" />
+    <PackageReference Include="System.Text.Json" Version="5.0.2" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+  </ItemGroup>
+  </Project>
+  `;
+      const newProjectFile = getNewProjectContentCsproj('12.0.45', csproj);
+      expect(newProjectFile).toMatchSnapshot();
+    });
     test('should return version', () => {
       const csproj = `<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -171,23 +201,7 @@ describe('Utils', () => {
   </ItemGroup>
 </Project>`;
       const content = getNewProjectContentCsproj('1.0.1', csproj);
-      expect(content).toEqual(`<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <RootNamespace>Asyncapi.Nats.Client</RootNamespace>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <Version>1.0.1</Version>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <None Remove="NATS.Client"/>
-    <None Remove="System.Text.Json"/>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="NATS.Client" Version="0.12.0"/>
-    <PackageReference Include="System.Text.Json" Version="5.0.2"/>
-  </ItemGroup>
-</Project>`);
+      expect(content).toMatchSnapshot();
     });
     test('should return correctly when no version present', () => {
       const csproj = `<Project Sdk="Microsoft.NET.Sdk">
@@ -208,22 +222,7 @@ describe('Utils', () => {
 </Project>
 `;
       const content = getNewProjectContentCsproj('1.0.1', csproj);
-      expect(content).toEqual(`<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <RootNamespace>Asyncapi.Nats.Client</RootNamespace>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-  <Version>1.0.1</Version></PropertyGroup>
-
-  <ItemGroup>
-    <None Remove="NATS.Client"/>
-    <None Remove="System.Text.Json"/>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="NATS.Client" Version="0.12.0"/>
-    <PackageReference Include="System.Text.Json" Version="5.0.2"/>
-  </ItemGroup>
-</Project>`);
+      expect(content).toMatchSnapshot();
     });
   });
   
