@@ -66,6 +66,14 @@ inputs:
       Use {{version}} as a placeholder for the new version.
     default: 'ci: version bump to {{version}}'
     required: false
+  release-commit-message-regex:
+    description: |
+      Set a custom commit message regex for release commits.
+      Use {{version}} as a placeholder for the new version.
+      Default
+    default: 'ci: version bump to {{version}}'
+    required: false
+    
 outputs:
   wasBumped:
     description: 'Boolean to check if the version of the library was bumped'
