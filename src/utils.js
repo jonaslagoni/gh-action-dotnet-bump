@@ -36,9 +36,8 @@ function getCurrentVersionCsproj(csprojDocument) {
     const propertyGroupNodes = Object.values(rootNode.childNodes).filter((node) => {
       return node.nodeName === 'PropertyGroup';
     });
-    if (propertyGroupNodes.length === 1) {
-      const propertyGroupNode = propertyGroupNodes[0];
-      
+    //find version property within one of the property groups
+    for (const propertyGroupNode of propertyGroupNodes) {
       const versionNodes = Object.values(propertyGroupNode.childNodes).filter((node) => {
         return node.nodeName === 'Version';
       });
@@ -63,22 +62,17 @@ function getNewProjectContentCsproj(newVersion, csprojDocument) {
     const propertyGroupNodes = Object.values(rootNode.childNodes).filter((node) => {
       return node.nodeName === 'PropertyGroup';
     });
-    if (propertyGroupNodes.length === 1) {
-      const propertyGroupNode = propertyGroupNodes[0];
-
+    let coreVersionSat = false;
+    //find version property within one of the property groups
+    for (const propertyGroupNode of propertyGroupNodes) {
       const versionNodes = Object.values(propertyGroupNode.childNodes).filter((node) => {
         return node.nodeName === 'Version';
       });
       if (versionNodes.length === 1) {
         const versionNode = versionNodes[0];
         versionNode.childNodes.item(0).data = newVersion;
-      } else {
-        const versionNode = new DOMParser().parseFromString(
-          `<Version>${newVersion}</Version>`,
-          'text/xml'
-        );
-        propertyGroupNode.appendChild(versionNode);
-      }
+        coreVersionSat = true;
+      } 
 
       const packageVersionNodes = Object.values(propertyGroupNode.childNodes).filter((node) => {
         return node.nodeName === 'PackageVersion';
@@ -103,6 +97,15 @@ function getNewProjectContentCsproj(newVersion, csprojDocument) {
         const versionNode = fileVersionNodes[0];
         versionNode.childNodes.item(0).data = `${newVersion}.0`;
       }
+    }
+    if (coreVersionSat === false && propertyGroupNodes.length > 0) {
+      //Greedy, set the version in the first encountered property group
+      const propertyGroupNode = propertyGroupNodes[0];
+      const versionNode = new DOMParser().parseFromString(
+        `<Version>${newVersion}</Version>`,
+        'text/xml'
+      );
+      propertyGroupNode.appendChild(versionNode);
     }
   }
   return new XMLSerializer().serializeToString(rootNode);
