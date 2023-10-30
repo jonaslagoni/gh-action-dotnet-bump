@@ -325,7 +325,7 @@ async function setGitConfigs() {
   await runInWorkspace('git', ['fetch']);
 }
 
-async function commitChanges(newVersion, skipCommit, skipTag, skipPush, commitMessageToUse) {
+async function commitChanges(newVersion, skipCommit, skipTag, skipPush, commitMessageToUse, repoDomain) {
   try {
     // to support "actions/checkout@v1"
     if (!skipCommit) {
@@ -343,7 +343,15 @@ async function commitChanges(newVersion, skipCommit, skipTag, skipPush, commitMe
     );
   }
 
-  const remoteRepo = `https://${process.env.GITHUB_ACTOR}:${process.env.GITHUB_TOKEN}@github.com/${process.env.GITHUB_REPOSITORY}.git`;
+  //In case there's a private domain
+  let repoUrlDomain = 'github.com';
+  
+  if(repoDomain){
+    //Removed https
+    repoUrlDomain = repoDomain.replace(/^https?\:\/\//i, "");
+  }
+
+  const remoteRepo = `https://${process.env.GITHUB_ACTOR}:${process.env.GITHUB_TOKEN}@${repoUrlDomain}/${process.env.GITHUB_REPOSITORY}.git`;
   if (!skipTag) {
     await runInWorkspace('git', ['tag', newVersion]);
     if (!skipPush) {
