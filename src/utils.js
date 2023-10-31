@@ -346,9 +346,9 @@ async function commitChanges(newVersion, skipCommit, skipTag, skipPush, commitMe
   //In case there's a private domain
   let repoUrlDomain = 'github.com';
   
-  if(repoDomain){
+  if (repoDomain) {
     //Removed https
-    repoUrlDomain = repoDomain.replace(/^https?\:\/\//i, "");
+    repoUrlDomain = repoDomain.replace(/^https?\:\/\//i, '');
   }
 
   const remoteRepo = `https://${process.env.GITHUB_ACTOR}:${process.env.GITHUB_TOKEN}@${repoUrlDomain}/${process.env.GITHUB_REPOSITORY}.git`;
