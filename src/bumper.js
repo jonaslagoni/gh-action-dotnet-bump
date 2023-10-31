@@ -32,7 +32,8 @@ module.exports = async (
   preReleaseId,
   commitMessageToUse, 
   type,
-  releaseCommitMessageRegex) => {
+  releaseCommitMessageRegex,
+  repoDomain) => {
   const token = process.env.GITHUB_TOKEN;
   // eslint-disable-next-line security/detect-non-literal-require
   const gitEvents = process.env.GITHUB_EVENT_PATH ? require(process.env.GITHUB_EVENT_PATH) : {};
@@ -109,7 +110,7 @@ module.exports = async (
   // eslint-disable-next-line security/detect-non-literal-fs-filename
   await promises.writeFile(pathToDocument, newContent);
   logInfo('New project file written');
-  await commitChanges(newVersion, skipCommit, skipTag, skipPush, commitMessageToUse);
+  await commitChanges(newVersion, skipCommit, skipTag, skipPush, commitMessageToUse, repoDomain);
   logInfo('Changes committed');
   return true;
 };
